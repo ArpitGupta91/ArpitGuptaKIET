@@ -1,0 +1,796 @@
+# TASK: Implement Model Monitoring, Evaluation, Retraining and Champion-Candidate Quality Gate in Our Existing AutoML & MLOps Project
+
+Act as a Senior Machine Learning Engineer, MLOps Engineer, and Full-Stack Python Developer.
+
+I have an existing Self-Hosted AutoML & MLOps Platform. I need you to extend the existing project to complete my college assessment on Model Monitoring and Retraining.
+
+**IMPORTANT: Do not create a new project. Do not replace my existing architecture. Extend the current implementation while preserving all existing features and functionality.**
+
+Your job is to inspect the complete codebase, understand how the current application works, and implement the requirements below in a clean, modular, tested, and professional manner.
+
+---
+
+# 1. EXISTING PROJECT INFORMATION
+
+My existing application uses:
+
+- Python 3.11
+- Streamlit frontend
+- FastAPI backend
+- Pandas and NumPy
+- Scikit-learn
+- XGBoost
+- MLflow for experiment tracking and model artifacts
+- PostgreSQL for application metadata
+- Docker and Docker Compose
+- Plotly for visualizations
+
+Existing services:
+
+- Streamlit: http://localhost:8501
+- FastAPI: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+- MLflow: http://localhost:5000
+- PostgreSQL: localhost:5432
+
+Existing project functionality:
+
+1. CSV dataset upload and validation.
+2. Dataset profiling.
+3. Classification and regression task selection.
+4. Automatic preprocessing.
+5. Model training and comparison.
+6. RandomizedSearchCV hyperparameter tuning.
+7. Model evaluation and best-model selection.
+8. MLflow experiment tracking.
+9. PostgreSQL metadata storage.
+10. Single-record prediction.
+11. Batch CSV prediction.
+12. Docker-based service management.
+
+Existing classification algorithms:
+
+- Logistic Regression
+- Decision Tree
+- Random Forest
+- XGBoost Classifier
+
+Existing regression algorithms:
+
+- Linear Regression
+- Decision Tree Regressor
+- Random Forest Regressor
+- XGBoost Regressor
+
+Existing preprocessing:
+
+- Numerical features: Median Imputation + StandardScaler.
+- Categorical features: Most Frequent Imputation + OneHotEncoder.
+- Missing target rows are removed.
+- Existing fitted preprocessing and model pipeline is saved together.
+
+Existing model tracking is handled by MLflow.
+
+Reuse these existing components wherever possible.
+
+---
+
+# 2. MAIN OBJECTIVE
+
+Implement a basic but complete Model Monitoring and Retraining workflow.
+
+The system must support:
+
+1. Preparing newly available labelled data.
+2. Evaluating the existing trained model on new data.
+3. Retraining a candidate model using old and new training data.
+4. Comparing the existing champion model against the candidate model.
+5. Implementing a quality gate.
+6. Promoting the candidate only after satisfying the quality criteria and recording the decision.
+7. Preserving the existing champion when the candidate fails.
+
+The system must support both classification and regression.
+
+---
+
+# 3. FIRST STEP: INSPECT THE EXISTING PROJECT
+
+Before writing code:
+
+1. Inspect the complete folder structure.
+2. Identify the existing dataset upload logic.
+3. Identify how original training datasets are stored.
+4. Identify how training runs and dataset IDs are stored in PostgreSQL.
+5. Identify how models and pipelines are saved and loaded from MLflow.
+6. Identify the existing preprocessing implementation.
+7. Identify the existing classification and regression training functions.
+8. Identify the current API routes and Streamlit pages.
+9. Identify how the best-performing model is selected.
+10. Identify the current Docker configuration.
+
+Create a short implementation plan.
+
+Important:
+
+- Reuse existing model pipelines.
+- Reuse existing database connections.
+- Reuse existing MLflow configuration.
+- Reuse existing API and frontend conventions.
+- Do not duplicate existing functionality unnecessarily.
+- Do not break existing upload, training, analytics, or prediction features.
+- Do not hardcode model paths, dataset IDs, run IDs, or API keys.
+- Do not assume that an MLflow model artifact contains the original training dataset.
+
+If an essential capability is missing, implement it using the existing architecture.
+
+After inspection, proceed with implementation rather than stopping after producing the plan.
+
+---
+
+# 4. TASK A — PREPARE NEW DATA
+
+Implement a new-data upload and validation feature.
+
+The user must be able to upload a new labelled CSV dataset through Streamlit.
+
+Requirements:
+
+A. Accept CSV files.
+
+B. Validate:
+- File format.
+- Empty datasets.
+- Required feature columns.
+- Target column availability.
+- Missing target values.
+- Missing feature values.
+- Duplicate records.
+- Duplicate IDs, if an ID column is configured.
+- Data type compatibility.
+- Compatibility with the original model's expected input features.
+
+C. Dataset information must display:
+- Total number of rows.
+- Total number of columns.
+- Missing values per column.
+- Duplicate record count.
+- Number of valid records.
+- Target distribution for classification.
+- Target statistics for regression.
+
+D. Display a data preview.
+
+E. Allow the user to select or confirm:
+- Dataset.
+- Original training run.
+- Target column.
+- Task type.
+- Optional ID column.
+
+F. Prevent incompatible datasets from entering the monitoring workflow.
+
+G. Save the uploaded new dataset with a unique ID and appropriate metadata.
+
+IMPORTANT:
+Do not silently remove or modify important records. Clearly report any cleaning performed.
+
+---
+
+# 5. TASK B — EVALUATE THE EXISTING MODEL
+
+Implement evaluation of the already-trained model on the newly uploaded labelled dataset.
+
+Requirements:
+
+1. Identify the existing trained model using its MLflow run ID or the project's existing model-selection mechanism.
+2. Load the saved model pipeline from MLflow.
+3. Validate the incoming feature columns.
+4. Generate predictions on the new labelled dataset.
+5. Calculate the following metrics.
+
+For classification:
+
+- Accuracy
+- Precision
+- Recall
+- F1-score
+
+Use appropriate averaging for multiclass classification. For binary or imbalanced classification, clearly identify the positive-class or weighted-average interpretation.
+
+For regression:
+
+- MAE
+- RMSE
+- R²
+
+6. Display the metrics in Streamlit using metric cards and Plotly charts.
+7. Display a comparison between the model's earlier performance and its performance on the new labelled data when the earlier metrics are available.
+8. Save evaluation results as a structured JSON report and a readable CSV or HTML report.
+9. Store evaluation history with:
+   - Evaluation ID
+   - Dataset ID
+   - Original model run ID
+   - Task type
+   - Evaluation timestamp
+   - Evaluation metrics
+   - Report location
+   - Evaluation status
+
+IMPORTANT:
+The model must not be retrained during this task. This stage must evaluate the existing model only.
+
+---
+
+# 6. TASK C — RETRAIN THE MODEL
+
+Implement candidate-model retraining using existing training data and newly available labelled data.
+
+Requirements:
+
+1. Retrieve the original training dataset associated with the selected model or dataset.
+2. Load the new labelled dataset.
+3. Verify that both datasets have compatible feature columns, target columns, and task types.
+4. Handle column ordering and data type compatibility safely.
+5. Combine the old training data with the new training data.
+6. Remove duplicate records appropriately, with clear reporting.
+7. Reuse the existing preprocessing pipeline and supported algorithms.
+8. Train a new candidate model.
+9. Use the existing training strategy wherever possible:
+   - 80/20 train-test split.
+   - Random state 42.
+   - Existing classification/regression algorithms.
+   - Existing preprocessing.
+   - Existing evaluation metrics.
+10. Save the candidate model separately from the existing champion model.
+11. Never overwrite the current champion during candidate training.
+12. Track the new training run in MLflow.
+
+MLflow must record:
+
+- Model name.
+- Task type.
+- Dataset IDs used.
+- Original champion run ID.
+- Candidate run ID.
+- Training parameters.
+- Evaluation metrics.
+- Training timestamp.
+- Model artifacts.
+- Model role: candidate.
+
+IMPORTANT — AVOID DATA LEAKAGE:
+
+Do not train the candidate on the same records used for its final quality-gate evaluation.
+
+Where the incoming labelled dataset is sufficiently large:
+
+- Split the new data into a retraining portion and a separate validation portion.
+- Combine the retraining portion with the original training data.
+- Train the candidate using the combined training data.
+- Evaluate both the existing champion and candidate on the SAME held-out new-data validation portion.
+
+For Task B, also report the existing model's metrics on the complete valid incoming labelled dataset as requested.
+
+Use a fixed random seed and appropriate stratification for classification.
+
+If the incoming dataset is too small for a meaningful holdout, do not pretend that the comparison is leakage-free. Report the limitation and require a suitable validation dataset or use an explicitly documented alternative.
+
+---
+
+# 7. TASK D — IMPLEMENT A QUALITY GATE
+
+This is one of the most important requirements.
+
+Implement a Champion vs Candidate model comparison system.
+
+Definitions:
+
+CHAMPION:
+The currently approved model used by the existing prediction system.
+
+CANDIDATE:
+The newly trained model waiting for evaluation and possible promotion.
+
+Quality gate requirements:
+
+1. Evaluate the champion and candidate on the SAME held-out validation dataset.
+2. Compare their performance.
+3. Use appropriate quality metrics depending on the task.
+
+For classification:
+
+- Primary metric: Weighted F1-score.
+- Additional metrics: Accuracy, Precision and Recall.
+
+Default decision rule:
+
+- Candidate must have a Weighted F1-score greater than or equal to the champion.
+- Candidate must not reduce accuracy by more than a configurable tolerance.
+- Candidate must have valid evaluation results.
+
+For regression:
+
+- Primary metric: RMSE.
+- Additional metrics: MAE and R².
+
+Default decision rule:
+
+- Candidate RMSE must be lower than or equal to champion RMSE.
+- Candidate R² must not be lower than champion R² by more than a configurable tolerance.
+- Candidate must have valid evaluation results.
+
+Make thresholds configurable instead of hardcoding them throughout the application.
+
+Display a clear comparison:
+
+| Metric | Champion | Candidate | Difference |
+|---|---|---|---|
+
+Possible quality-gate outcomes:
+
+- ELIGIBLE_FOR_PROMOTION
+- REJECTED
+- NEEDS_REVIEW
+- FAILED
+
+A candidate should only be marked eligible if all required conditions are satisfied.
+
+IMPORTANT SAFETY RULES:
+
+- Never automatically overwrite the champion without recording the decision.
+- Never promote a model that failed validation.
+- Never delete the previous champion.
+- Record the reason for acceptance or rejection.
+- Preserve the candidate artifact even when it is rejected.
+- Require an explicit user confirmation before promotion.
+- Keep a history of every quality-gate decision.
+
+Store:
+
+- Champion run ID.
+- Candidate run ID.
+- Evaluation dataset ID.
+- Champion metrics.
+- Candidate metrics.
+- Metric differences.
+- Threshold configuration.
+- Quality-gate result.
+- Decision reason.
+- Timestamp.
+- User confirmation status.
+- Promotion status.
+
+---
+
+# 8. TASK E — MODEL PROMOTION AND HISTORY
+
+Implement safe model promotion.
+
+When a candidate is eligible:
+
+1. Display its comparison results.
+2. Show a clear Promote Candidate button.
+3. Ask for user confirmation.
+4. Record the promotion decision.
+5. Update the active champion reference only after confirmation.
+6. Preserve the previous champion and its MLflow artifacts.
+7. Record the previous champion run ID and new champion run ID.
+8. Ensure the prediction system loads the currently approved champion.
+
+When a candidate is rejected:
+
+- Keep the old champion active.
+- Keep the candidate available for inspection.
+- Record why it was rejected.
+
+Implement a model registry or equivalent database-based champion reference using the existing project architecture.
+
+Do not assume that MLflow automatically provides a model registry in the current configuration. Inspect the actual MLflow setup first.
+
+Promotion must be transactional and safe. If promotion fails, the old champion must remain active.
+
+---
+
+# 9. DATABASE AND BACKEND IMPLEMENTATION
+
+Inspect the existing PostgreSQL models and migrations before adding new tables.
+
+Add appropriate database models/tables for:
+
+- New dataset monitoring records.
+- Model evaluation history.
+- Candidate model metadata.
+- Quality-gate decisions.
+- Model promotion history.
+- Current champion reference, if not already available.
+
+Create clean and modular backend services.
+
+Suggested service organization (adapt it to the existing structure):
+
+- monitoring_service.py
+- evaluation_service.py
+- retraining_service.py
+- quality_gate_service.py
+- model_promotion_service.py
+
+Suggested API endpoints (adapt to existing naming conventions):
+
+POST /monitoring/upload
+GET /monitoring/datasets
+GET /monitoring/datasets/{dataset_id}
+
+POST /monitoring/evaluate
+GET /monitoring/evaluations
+GET /monitoring/evaluations/{evaluation_id}
+
+POST /monitoring/retrain
+GET /monitoring/candidates
+GET /monitoring/candidates/{candidate_id}
+
+POST /monitoring/quality-gate
+GET /monitoring/quality-gate/{decision_id}
+
+POST /monitoring/promote
+GET /monitoring/promotion-history
+
+GET /monitoring/champion
+
+Every endpoint must include appropriate request validation, response models, and error handling.
+
+Use the project's existing authentication and API-key conventions where applicable.
+
+---
+
+# 10. STREAMLIT FRONTEND IMPLEMENTATION
+
+Add a new section or page named:
+
+MODEL MONITORING & RETRAINING
+
+It must have a clean, professional dashboard consistent with the existing application's design.
+
+Include the following sections:
+
+A. Upload New Data
+- CSV upload.
+- Dataset preview.
+- Dataset validation.
+- Dataset statistics.
+- Target distribution.
+
+B. Existing Model Evaluation
+- Select existing dataset/model.
+- Evaluate existing model.
+- Display Accuracy, Precision, Recall, F1-score or MAE, RMSE, R².
+- Show evaluation report download.
+
+C. Model Retraining
+- Select original dataset/model.
+- Show incoming dataset information.
+- Start candidate retraining.
+- Display training progress and status.
+
+D. Champion vs Candidate
+- Display champion and candidate metrics side by side.
+- Show metric differences.
+- Use clear charts.
+- Show quality-gate status.
+
+E. Model Promotion
+- Promote Candidate button.
+- Explicit confirmation.
+- Success or rejection message.
+- Current champion information.
+
+F. Monitoring History
+- Previous evaluations.
+- Previous retraining runs.
+- Candidate models.
+- Quality-gate decisions.
+- Promotion history.
+
+Use clear labels and understandable explanations so a teacher can easily understand the workflow.
+
+Do not display fake metrics, fake training statuses, or hardcoded results.
+
+---
+
+# 11. REPORT GENERATION
+
+This assessment requires us to share implementation results with our teacher.
+
+Generate downloadable reports automatically.
+
+Create a report containing:
+
+1. Project name.
+2. Monitoring execution ID.
+3. Original champion model information.
+4. New labelled dataset information.
+5. Dataset validation results.
+6. Dataset size and target distribution.
+7. Existing model evaluation metrics.
+8. Retraining dataset information.
+9. Candidate model information.
+10. Champion vs Candidate comparison.
+11. Quality-gate thresholds.
+12. Quality-gate decision.
+13. Reason for accepting or rejecting the candidate.
+14. Promotion status.
+15. Execution timestamp.
+
+Save reports in an organized location, such as:
+
+reports/
+    monitoring/
+        evaluation_report_<id>.json
+        monitoring_report_<id>.html
+        quality_gate_report_<id>.json
+
+Also provide downloadable reports from Streamlit.
+
+Reports must contain actual values generated by the application.
+
+---
+
+# 12. TESTING REQUIREMENTS
+
+Write automated tests using pytest.
+
+Test at least the following:
+
+TASK A:
+- Valid CSV upload.
+- Invalid CSV upload.
+- Missing required columns.
+- Missing target values.
+- Duplicate records.
+- Duplicate IDs.
+- Classification target distribution.
+- Regression target validation.
+
+TASK B:
+- Load existing model.
+- Generate predictions.
+- Calculate classification metrics.
+- Calculate regression metrics.
+- Save evaluation report.
+- Handle incompatible features.
+
+TASK C:
+- Combine old and new datasets.
+- Prevent data leakage.
+- Train candidate model.
+- Save candidate separately.
+- Track candidate in MLflow.
+- Handle training failures.
+
+TASK D:
+- Candidate passes quality gate.
+- Candidate fails quality gate.
+- Candidate has invalid metrics.
+- Classification quality gate.
+- Regression quality gate.
+- Record decision reasons.
+
+TASK E:
+- Promote eligible candidate.
+- Reject ineligible candidate.
+- Require confirmation.
+- Preserve old champion.
+- Maintain promotion history.
+- Ensure predictions use the active champion.
+
+Also test that all existing project tests continue to pass.
+
+Do not delete or weaken existing tests to make the new implementation pass.
+
+---
+
+# 13. DOCKER AND CONFIGURATION
+
+Update Docker Compose only if required.
+
+Ensure that:
+
+- Existing services continue to work.
+- New database tables are initialized safely.
+- MLflow tracking continues to work.
+- Uploaded datasets persist.
+- Candidate models persist.
+- Monitoring reports persist.
+- Existing PostgreSQL and MLflow volumes are preserved.
+
+Do not use `docker compose down -v`.
+
+Do not delete existing volumes or user data.
+
+Use environment variables for configurable thresholds and paths.
+
+Update .env.example if necessary, without exposing real secrets.
+
+---
+
+# 14. DOCUMENTATION FOR THE TEACHER
+
+Create a detailed file:
+
+MODEL_MONITORING_GUIDE.md
+
+Explain:
+
+1. What model monitoring means.
+2. Why retraining is needed.
+3. What a champion model is.
+4. What a candidate model is.
+5. How new data is uploaded.
+6. How the existing model is evaluated.
+7. How retraining works.
+8. How the quality gate works.
+9. How promotion is performed.
+10. How MLflow tracks experiments.
+11. How to run the entire workflow.
+12. How to interpret classification metrics.
+13. How to interpret regression metrics.
+14. Screenshots or screenshot instructions for every major step.
+15. Current limitations and future improvements.
+
+Also create:
+
+ASSESSMENT_IMPLEMENTATION_SUMMARY.md
+
+This file must map every assessment requirement (Task A, B, C, D and E) to:
+
+- Implemented feature.
+- Relevant source-code file.
+- API endpoint.
+- Frontend section.
+- Test case.
+- Evidence/report generated.
+
+Do not claim a feature is complete unless it has actually been implemented and tested.
+
+---
+
+# 15. IMPORTANT DEVELOPMENT RULES
+
+Follow these rules throughout implementation:
+
+1. Work directly inside the existing repository.
+2. Inspect before modifying.
+3. Do not rewrite the project from scratch.
+4. Do not remove existing functionality.
+5. Do not create duplicate training pipelines unnecessarily.
+6. Reuse the existing preprocessing pipeline.
+7. Reuse existing MLflow integration.
+8. Keep candidate and champion artifacts separate.
+9. Prevent data leakage.
+10. Never promote a candidate without an explicit decision.
+11. Persist all important monitoring and promotion records.
+12. Add meaningful logging and exception handling.
+13. Use modular, readable, maintainable code.
+14. Follow the existing coding conventions.
+15. Do not hardcode fake results.
+16. Do not leave placeholder functions or incomplete TODOs.
+17. Run tests after implementation.
+18. Fix errors introduced by your changes.
+19. Preserve existing data and database volumes.
+20. Do not claim success for functionality that has not been verified.
+
+---
+
+# 16. REQUIRED IMPLEMENTATION ORDER
+
+Implement in this sequence:
+
+Phase 1: Repository inspection and implementation plan.
+
+Phase 2: Database models and persistence.
+
+Phase 3: New dataset upload and validation.
+
+Phase 4: Existing model evaluation and report generation.
+
+Phase 5: Candidate retraining using old and new training data.
+
+Phase 6: MLflow candidate tracking.
+
+Phase 7: Champion vs Candidate quality gate.
+
+Phase 8: Safe model promotion.
+
+Phase 9: Streamlit monitoring dashboard.
+
+Phase 10: API integration.
+
+Phase 11: Automated tests.
+
+Phase 12: Documentation and assessment evidence.
+
+After each phase, verify that the existing application still works.
+
+---
+
+# 17. FINAL ACCEPTANCE CHECKLIST
+
+Do not consider the task complete until the following are verified:
+
+[ ] New labelled CSV can be uploaded.
+
+[ ] Required columns and target are validated.
+
+[ ] Missing values and duplicates are reported.
+
+[ ] Dataset size is displayed.
+
+[ ] Classification target distribution is displayed.
+
+[ ] Existing trained model can be loaded.
+
+[ ] Existing model predictions are generated on new labelled data.
+
+[ ] Required classification or regression metrics are calculated.
+
+[ ] Evaluation report is saved and downloadable.
+
+[ ] Old and new training data are combined safely.
+
+[ ] Candidate model is trained.
+
+[ ] Candidate model is saved separately.
+
+[ ] Candidate experiment is logged in MLflow.
+
+[ ] Champion and candidate are evaluated on the same held-out validation data.
+
+[ ] Quality-gate decision is generated.
+
+[ ] Reasons for acceptance or rejection are recorded.
+
+[ ] Candidate cannot overwrite champion automatically.
+
+[ ] User confirmation is required for promotion.
+
+[ ] Previous champion is preserved.
+
+[ ] Prediction endpoint uses the approved champion.
+
+[ ] Monitoring history is available.
+
+[ ] Reports are downloadable.
+
+[ ] Docker services work.
+
+[ ] All relevant new tests pass.
+
+[ ] Existing tests still pass.
+
+[ ] Teacher documentation is generated.
+
+---
+
+# FINAL INSTRUCTION
+
+Start by inspecting my existing repository.
+
+Then implement the complete monitoring and retraining workflow in the existing project.
+
+Do not just provide code examples or an implementation plan. Make the actual code changes, integrate the features into the frontend and backend, run tests, fix implementation errors, and generate the documentation.
+
+If something cannot be implemented because the existing project lacks a required capability, explain the issue, implement the safest compatible solution, and document the limitation.
+
+At the end, provide a clear summary containing:
+
+1. Files created.
+2. Files modified.
+3. New database tables.
+4. New API endpoints.
+5. New frontend features.
+6. MLflow integration changes.
+7. Tests executed and their actual results.
+8. Commands to run the updated application.
+9. Exact steps to demonstrate Tasks A–E to our teacher.
+10. Location of all generated reports and documentation.
+
+**The final result must be a working extension of our existing AutoML & MLOps platform, not a separate demonstration project.**
